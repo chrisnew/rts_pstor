@@ -138,39 +138,6 @@ static int slave_configure(struct scsi_device *sdev)
 #define SPRINTF(args...) \
 	do { if (pos < buffer+length) pos += sprintf(pos, ## args); } while (0)
 
-static int proc_info (struct Scsi_Host *host, char *buffer,
-		char **start, off_t offset, int length, int inout)
-{
-	char *pos = buffer;
-
-	
-	if (inout)
-		return length;
-
-	
-	SPRINTF("   Host scsi%d: %s\n", host->host_no, CR_DRIVER_NAME);
-
-	
-	SPRINTF("       Vendor: Realtek Corp.\n");
-	SPRINTF("      Product: PCIE Card Reader\n");
-	SPRINTF("      Version: %s\n", DRIVER_VERSION);
-	SPRINTF("        Build: %s\n", DRIVER_MAKE_TIME);
-
-	/*
-	 * Calculate start of next buffer, and return value.
-	 */
-	*start = buffer + offset;
-
-	if ((pos - buffer) < offset)
-		return (0);
-	else if ((pos - buffer - offset) < length)
-		return (pos - buffer - offset);
-	else
-		return (length);
-}
-
-
-
 static int queuecommand_lck(struct scsi_cmnd *srb,
 			void (*done)(struct scsi_cmnd *))
 {

@@ -494,13 +494,13 @@ static int rtsx_control_thread(void * __dev)
 		 * the maximum known LUN
 		 */
 		else if (chip->srb->device->id) {
-			printk(KERN_ERR "Bad target number (%d:%d)\n",
+			printk(KERN_ERR "Bad target number (%d:%llu)\n",
 				  chip->srb->device->id, chip->srb->device->lun);
 			chip->srb->result = DID_BAD_TARGET << 16;
 		}
 
 		else if (chip->srb->device->lun > chip->max_lun) {
-			printk(KERN_ERR "Bad LUN (%d:%d)\n",
+			printk(KERN_ERR "Bad LUN (%d:%llu)\n",
 				  chip->srb->device->id, chip->srb->device->lun);
 			chip->srb->result = DID_BAD_TARGET << 16;
 		}

@@ -1,0 +1,7 @@
+*.o
+*.o.cmd
+*.ko
+*.ko.cmd
+timestamp.h
+modules.order
+/.tmp_versions

@@ -302,7 +302,7 @@ static int inquiry(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 	char inquiry_sd[48] =      "Generic-SD/MMC          1.00 ";
 	char inquiry_ms[48] =      "Generic-MemoryStick     1.00 ";
 	char *inquiry_string;
-	unsigned char sendbytes;
+	unsigned int sendbytes;
 	unsigned char *buf;
 	u8 card = get_lun_card(chip, lun);
 	int pro_formatter_flag = 0;
@@ -330,11 +330,6 @@ static int inquiry(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 		inquiry_string = inquiry_default;
 	}
 	
-	buf = vmalloc(scsi_bufflen(srb));
-	if (buf == NULL) {
-		TRACE_RET(chip, TRANSPORT_ERROR);
-	}
-
 #ifdef SUPPORT_MAGIC_GATE
 	if ((chip->mspro_formatter_enable) && 
 			(chip->lun2card[lun] & MS_CARD))
@@ -359,6 +354,11 @@ static int inquiry(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 		} else {
 			sendbytes = 36;
 		}
+	}
+
+	buf = vmalloc(sendbytes);
+	if (buf == NULL) {
+		TRACE_RET(chip, TRANSPORT_ERROR);
 	}
 
 	if (sendbytes > 8) {

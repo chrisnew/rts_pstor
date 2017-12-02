@@ -83,7 +83,7 @@ do {													\
 #define TRACE_GOTO(chip, label)	goto label
 #endif
 
-#if DBG
+#ifdef RTSX_IS_DEBUG
 
 #include "general.h"
 
@@ -122,7 +122,7 @@ do {						\
 
 #endif
 
-#if DBG
+#ifdef RTSX_IS_DEBUG
 static inline void rtsx_dump(u8 *buf, int buf_len)
 {
 	int i;

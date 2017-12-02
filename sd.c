@@ -314,7 +314,7 @@ RTY_SEND_CMD:
 
 static inline void sd_print_debug_reg(struct rtsx_chip *chip)
 {
-#if DBG
+#ifdef RTSX_IS_DEBUG
 	u8 val;
 
 	rtsx_read_register(chip, REG_SD_STAT1, &val);
@@ -954,7 +954,7 @@ static int sd_change_phase(struct rtsx_chip *chip, u8 sample_point, u8 tune_dir)
 		RTSX_WRITE_REG(chip, SD_VPCLK0_CTL, PHASE_NOT_RESET, PHASE_NOT_RESET);
 		RTSX_WRITE_REG(chip, CLK_CTL, CHANGE_CLK, 0);
 	} else {
-#if DBG
+#ifdef RTSX_IS_DEBUG
 		rtsx_read_register(chip, SD_VP_CTL, &val);
 		RTSX_DEBUGP(("SD_VP_CTL: 0x%x\n", val));
 		rtsx_read_register(chip, SD_DCMPS_CTL, &val);
@@ -1003,7 +1003,7 @@ static int sd_change_phase(struct rtsx_chip *chip, u8 sample_point, u8 tune_dir)
 	return STATUS_SUCCESS;
 	
 Fail:
-#if DBG
+#ifdef RTSX_IS_DEBUG
 	rtsx_read_register(chip, SD_VP_CTL, &val);
 	RTSX_DEBUGP(("SD_VP_CTL: 0x%x\n", val));
 	rtsx_read_register(chip, SD_DCMPS_CTL, &val);

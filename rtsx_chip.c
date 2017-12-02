@@ -1321,7 +1321,7 @@ void rtsx_polling_func(struct rtsx_chip *chip)
 	
 #ifdef SUPPORT_OCP
 	if (CHECK_LUN_MODE(chip, SD_MS_2LUN)) {
-		#if DBG
+		#ifdef RTSX_IS_DEBUG
 		if (chip->ocp_stat & (SD_OC_NOW | SD_OC_EVER | MS_OC_NOW | MS_OC_EVER)) {
 			RTSX_DEBUGP(("Over current, OCPSTAT is 0x%x\n", chip->ocp_stat));
 		}

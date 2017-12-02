@@ -25,11 +25,10 @@
 #define __REALTEK_RTSX_DEBUG_H
 
 #include <linux/kernel.h>
-#include "define.h"
 
 #define RTSX_STOR "rts_pstor: "
 
-#if DBG
+#ifdef RTSX_IS_DEBUG
 #define DEBUGP(x...) printk( KERN_DEBUG RTSX_STOR x )
 #define DEBUGPN(x...) printk( KERN_DEBUG x )
 #define DEBUGPX(x...) printk( x )

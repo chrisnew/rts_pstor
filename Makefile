@@ -26,21 +26,19 @@ KVERSION := $(shell uname -r)
 
 TARGET_MODULE := rts_pstor
 
-EXTRA_CFLAGS := -Idrivers/scsi 
+EXTRA_CFLAGS := -Idrivers/scsi
 
 obj-m += $(TARGET_MODULE).o
+
+.PHONY: debug default
 
 $(TARGET_MODULE)-objs := rtsx.o rtsx_chip.o rtsx_transport.o rtsx_scsi.o rtsx_card.o \
 			 general.o sd.o xd.o ms.o spi.o
 
 default:
-	sed "s/RTSX_MK_TIME/`date +%y.%m.%d.%H.%M`/" timestamp.in > timestamp.h
-	cp -f ./define.release ./define.h
-	make -C /lib/modules/$(KVERSION)/build/ SUBDIRS=$(PWD) modules
+	make -j `nproc` -C /lib/modules/$(KVERSION)/build/ SUBDIRS=$(PWD) modules
 debug:
-	sed "s/RTSX_MK_TIME/`date +%y.%m.%d.%H.%M`/" timestamp.in > timestamp.h
-	cp -f ./define.debug ./define.h
-	make -C /lib/modules/$(KVERSION)/build/ SUBDIRS=$(PWD) modules
+	make -j `nproc` -C /lib/modules/$(KVERSION)/build/ SUBDIRS=$(PWD) modules EXTRA_CFLAGS="$(EXTRA_CFLAGS) -DRTSX_IS_DEBUG"
 install:
 	cp $(TARGET_MODULE).ko /lib/modules/$(KVERSION)/kernel/drivers/scsi -f
 clean:

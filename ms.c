@@ -37,7 +37,7 @@ static inline void ms_set_err_code(struct rtsx_chip *chip, u8 err_code)
 
 	ms_card->err_code = err_code;
 	
-#if DBG
+#ifdef RTSX_IS_DEBUG
 	if (err_code != MS_NO_ERROR) {
 		int i;
 		for (i = 0; i < 4; i++) {

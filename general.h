@@ -26,7 +26,7 @@
 
 #include "rtsx.h"
 
-#if DBG
+#ifdef RTSX_IS_DEBUG
 extern int trigger_enabled;
 #endif
 

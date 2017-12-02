@@ -36,8 +36,6 @@
 #include "sd.h"
 #include "xd.h"
 
-#include "timestamp.h"
-
 #define DRIVER_VERSION 		"v1.10"
 
 MODULE_DESCRIPTION("Realtek PCI-Express card reader driver");
@@ -886,8 +884,6 @@ static int rtsx_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
 	struct rtsx_dev *dev;
 	int err = 0;
 	struct task_struct *th;
-
-	printk(KERN_INFO "--- %s ---\n", DRIVER_MAKE_TIME);
 
 	err = pci_enable_device(pci);
 	if (err < 0) {

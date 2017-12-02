@@ -22,7 +22,7 @@
 
 #include "general.h"
 
-#if DBG
+#ifdef RTSX_IS_DEBUG
 int trigger_enabled = 1;
 #endif
 

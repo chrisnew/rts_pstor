@@ -25,7 +25,6 @@
 #define __REALTEK_RTSX_CHIP_H
 
 #include "rtsx.h"
-#include "define.h"
 
 #define SUPPORT_CPRM
 #define SUPPORT_OCP

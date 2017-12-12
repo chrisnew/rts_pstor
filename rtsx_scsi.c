@@ -297,10 +297,10 @@ unsigned char formatter_inquiry_str[20] =
 static int inquiry(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 {
 	unsigned int lun = SCSI_LUN(srb);
-	char *inquiry_default = (char *)"Generic-xD/SD/M.S.      1.00 ";
-	char *inquiry_sdms =    (char *)"Generic-SD/MemoryStick  1.00 ";
-	char *inquiry_sd =      (char *)"Generic-SD/MMC          1.00 ";
-	char *inquiry_ms =      (char *)"Generic-MemoryStick     1.00 ";
+	char inquiry_default[48] = "Generic-xD/SD/M.S.      1.00 ";
+	char inquiry_sdms[48] =    "Generic-SD/MemoryStick  1.00 ";
+	char inquiry_sd[48] =      "Generic-SD/MMC          1.00 ";
+	char inquiry_ms[48] =      "Generic-MemoryStick     1.00 ";
 	char *inquiry_string;
 	unsigned char sendbytes;
 	unsigned char *buf;

@@ -270,7 +270,9 @@ struct scsi_host_template rtsx_host_template = {
 	 * periodically someone should test to see which setting is more
 	 * optimal.
 	 */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
 	.use_clustering =		1,
+#endif
 
 	
 	.emulated =			1,

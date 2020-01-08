@@ -52,6 +52,12 @@
 #include "trace.h"
 #include "general.h"
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
+#define TIMESTRUCT timeval
+#else
+#define TIMESTRUCT timespec64
+#endif
+
 #define CR_DRIVER_NAME		"rts_pstor"
 
 
@@ -169,22 +175,34 @@ static inline struct rtsx_dev *host_to_rtsx(struct Scsi_Host *host) {
 
 static inline void get_current_time(u8 *timeval_buf, int buf_len)
 {
-	struct timeval tv;
+	struct TIMESTRUCT tv;
 
 	if (!timeval_buf || (buf_len < 8)) {
 		return;
 	}
 
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
 	do_gettimeofday(&tv);
+#else
+	ktime_get_real_ts64(&tv);
+#endif
 
 	timeval_buf[0] = (u8)(tv.tv_sec >> 24);
 	timeval_buf[1] = (u8)(tv.tv_sec >> 16);
 	timeval_buf[2] = (u8)(tv.tv_sec >> 8);
 	timeval_buf[3] = (u8)(tv.tv_sec);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
 	timeval_buf[4] = (u8)(tv.tv_usec >> 24);
 	timeval_buf[5] = (u8)(tv.tv_usec >> 16);
 	timeval_buf[6] = (u8)(tv.tv_usec >> 8);
 	timeval_buf[7] = (u8)(tv.tv_usec);
+#else
+	timeval_buf[4] = (u8)(tv.tv_nsec >> 24);
+	timeval_buf[5] = (u8)(tv.tv_nsec >> 16);
+	timeval_buf[6] = (u8)(tv.tv_nsec >> 8);
+	timeval_buf[7] = (u8)(tv.tv_nsec);
+#endif
 }
 
 /* The scsi_lock() and scsi_unlock() macros protect the sm_state and the

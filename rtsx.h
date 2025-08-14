@@ -52,34 +52,9 @@
 #include "trace.h"
 #include "general.h"
 
-#define CR_DRIVER_NAME		"rts_pstor"
-
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 14)
-#ifdef CONFIG_PCI
-#undef pci_intx
-#define pci_intx(pci,x)
-#endif
-#endif
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24)
-#define sg_page(sg)	(sg)->page
-#endif
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25)
-#define scsi_set_resid(srb, residue)	((srb)->resid = (residue))
-#define scsi_get_resid(srb)		((srb)->resid)
-
-static inline unsigned scsi_bufflen(struct scsi_cmnd *cmd)
-{
-	return cmd->request_bufflen;
-}
-#endif
-
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 32)
-#define pci_get_bus_and_slot(bus, devfn)	\
-	pci_get_domain_bus_and_slot(0, (bus), (devfn))
-#endif
+#define CR_DRIVER_NAME          "rts_pstor"
+#define pci_get_bus_and_slot(bus, devfn)        \
+        pci_get_domain_bus_and_slot(0, (bus), (devfn))
 
 /*
  * macros for easy use

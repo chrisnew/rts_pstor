@@ -38,34 +38,34 @@
 
 #include "timestamp.h"
 
-#define DRIVER_VERSION 		"v1.10"
+#define DRIVER_VERSION		"v1.11"
 
 MODULE_DESCRIPTION("Realtek PCI-Express card reader driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRIVER_VERSION);
 
 unsigned int delay_use = 1;
-module_param(delay_use, uint, S_IRUGO | S_IWUSR);
+module_param(delay_use, uint, 0644);
 MODULE_PARM_DESC(delay_use, "seconds to delay before using a new device");
 
 int ss_en = 0;
-module_param(ss_en, int, S_IRUGO | S_IWUSR);
+module_param(ss_en, int, 0644);
 MODULE_PARM_DESC(ss_en, "enable selective suspend");
 
 int ss_interval = 50;
-module_param(ss_interval, int, S_IRUGO | S_IWUSR);
+module_param(ss_interval, int, 0644);
 MODULE_PARM_DESC(ss_interval, "Interval to enter ss state in seconds");
 
 int auto_delink_en = 0;
-module_param(auto_delink_en, int, S_IRUGO | S_IWUSR);
+module_param(auto_delink_en, int, 0644);
 MODULE_PARM_DESC(auto_delink_en, "enable auto delink");
 
 unsigned char aspm_l0s_l1_en = 0;
-module_param(aspm_l0s_l1_en, byte, S_IRUGO | S_IWUSR);
+module_param(aspm_l0s_l1_en, byte, 0644);
 MODULE_PARM_DESC(aspm_l0s_l1_en, "enable device aspm");
 
 int msi_en = 0;
-module_param(msi_en, int, S_IRUGO | S_IWUSR);
+module_param(msi_en, int, 0644);
 MODULE_PARM_DESC(msi_en, "enable msi");
 
 /* These are used to make sure the module doesn't unload before all the
@@ -167,15 +167,7 @@ static int queuecommand_lck(struct scsi_cmnd *srb,
 	return 0;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 37)
-static int queuecommand(struct scsi_cmnd *srb,
-			void (*done)(struct scsi_cmnd *))
-{
-	return queuecommand_lck(srb, done);
-}
-#else
 static DEF_SCSI_QCMD(queuecommand)
-#endif
 
 /***********************************************************************
  * Error handling functions
@@ -285,23 +277,23 @@ struct scsi_host_template rtsx_host_template = {
 
 static int rtsx_acquire_irq(struct rtsx_dev *dev)
 {
-	struct rtsx_chip *chip = dev->chip;
-	
-	printk(KERN_INFO "%s: chip->msi_en = %d, pci->irq = %d\n", 
-			__FUNCTION__, chip->msi_en, dev->pci->irq);
-	
-	if (request_irq(dev->pci->irq, rtsx_interrupt,
-			chip->msi_en ? 0 : IRQF_SHARED,
-			CR_DRIVER_NAME, dev)) {
-		printk(KERN_ERR "rtsx: unable to grab IRQ %d, "
-		       "disabling device\n", dev->pci->irq);
-		return -1;
-	}
-	
-	dev->irq = dev->pci->irq;
-	pci_intx(dev->pci, !chip->msi_en);
-	
-	return 0;
+        struct rtsx_chip *chip = dev->chip;
+        int irq = pci_irq_vector(dev->pci, 0);
+
+        printk(KERN_INFO "%s: chip->msi_en = %d, irq = %d\n",
+                        __FUNCTION__, chip->msi_en, irq);
+
+        if (request_irq(irq, rtsx_interrupt,
+                        chip->msi_en ? 0 : IRQF_SHARED,
+                        CR_DRIVER_NAME, dev)) {
+                printk(KERN_ERR "rtsx: unable to grab IRQ %d, "
+                       "disabling device\n", irq);
+                return -1;
+        }
+
+        dev->irq = irq;
+
+        return 0;
 }
 
 
@@ -353,9 +345,7 @@ static int rtsx_suspend(struct pci_dev *pci, pm_message_t state)
 		dev->irq = -1;
 	}
 	
-	if (chip->msi_en) {
-		pci_disable_msi(pci);
-	}
+        pci_free_irq_vectors(pci);
 
 	pci_save_state(pci);
 	pci_enable_wake(pci, pci_choose_state(pci, state), 1);
@@ -396,11 +386,16 @@ static int rtsx_resume(struct pci_dev *pci)
 	}
 	pci_set_master(pci);
 	
-	if (chip->msi_en) {
-		if (pci_enable_msi(pci) < 0) {
-			chip->msi_en = 0;
-		}
-	}
+        if (pci_alloc_irq_vectors(pci, 1, 1,
+                        chip->msi_en ? PCI_IRQ_MSI : PCI_IRQ_LEGACY) < 0) {
+                if (chip->msi_en &&
+                    pci_alloc_irq_vectors(pci, 1, 1, PCI_IRQ_LEGACY) >= 0) {
+                        chip->msi_en = 0;
+                } else {
+                        mutex_unlock(&dev->dev_mutex);
+                        return -EIO;
+                }
+        }
 	
 	if (rtsx_acquire_irq(dev) < 0) {
 		
@@ -440,9 +435,7 @@ void rtsx_shutdown(struct pci_dev *pci)
 		dev->irq = -1;
 	}
 	
-	if (chip->msi_en) {
-		pci_disable_msi(pci);
-	}
+        pci_free_irq_vectors(pci);
 
 	pci_disable_device(pci);
 
@@ -695,9 +688,7 @@ static void rtsx_release_resources(struct rtsx_dev *dev)
 	if (dev->irq > 0) {
 		free_irq(dev->irq, (void *)dev);
 	}
-	if (dev->chip->msi_en) {
-		pci_disable_msi(dev->pci);
-	}
+        pci_free_irq_vectors(dev->pci);
 
 	/* Tell the control thread to exit.  The SCSI host must
 	 * already have been removed so it won't try to queue
@@ -962,11 +953,16 @@ static int rtsx_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
 
 	printk(KERN_INFO "pci->irq = %d\n", pci->irq);
 	
-	if (dev->chip->msi_en) {
-		if (pci_enable_msi(pci) < 0) {
-			dev->chip->msi_en = 0;
-		}
-	}
+        if (pci_alloc_irq_vectors(pci, 1, 1,
+                        dev->chip->msi_en ? PCI_IRQ_MSI : PCI_IRQ_LEGACY) < 0) {
+                if (dev->chip->msi_en &&
+                    pci_alloc_irq_vectors(pci, 1, 1, PCI_IRQ_LEGACY) >= 0) {
+                        dev->chip->msi_en = 0;
+                } else {
+                        err = -ENODEV;
+                        goto errout;
+                }
+        }
 	
 	if (rtsx_acquire_irq(dev) < 0) {
 		err = -EBUSY;

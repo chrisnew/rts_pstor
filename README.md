@@ -1,6 +1,6 @@
 # rts_pstor
 
-Linux driver for Realtek PCI-Express card reader chip.
+Linux driver for Realtek PCI-Express card reader chip, updated for Linux kernel 6.14.
 
 ## install
 

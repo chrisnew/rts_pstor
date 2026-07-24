@@ -351,7 +351,7 @@ static inline void rtsx_add_sg_tbl(struct rtsx_chip *chip, u32 addr, u32 len, u8
 	do {
 		if (len > 0x80000) {
 			temp_len = 0x80000;
-			temp_opt = option & (~SG_END);
+			temp_opt = option & (~RTSX_SG_END);
 		} else {
 			temp_len = len;
 			temp_opt = option;
@@ -462,9 +462,9 @@ int rtsx_transfer_sglist_adma_partial(struct rtsx_chip *chip, u8 card, struct sc
 			*index = *index + 1;
 		}
 		if ((i == (sg_cnt - 1)) || !resid) {
-			option = SG_VALID | SG_END | SG_TRANS_DATA;
+			option = RTSX_SG_VALID | RTSX_SG_END | SG_TRANS_DATA;
 		} else {
-			option = SG_VALID | SG_TRANS_DATA;
+			option = RTSX_SG_VALID | SG_TRANS_DATA;
 		}
 
 		rtsx_add_sg_tbl(chip, (u32)addr, (u32)len, option);
@@ -622,9 +622,9 @@ int rtsx_transfer_sglist_adma(struct rtsx_chip *chip, u8 card, struct scatterlis
 			RTSX_DEBUGP(("DMA addr: 0x%x, Len: 0x%x\n", (unsigned int)addr, len));
 
 			if (j == (sg_cnt - 1)) {
-				option = SG_VALID | SG_END | SG_TRANS_DATA;
+				option = RTSX_SG_VALID | RTSX_SG_END | SG_TRANS_DATA;
 			} else {
-				option = SG_VALID | SG_TRANS_DATA;
+				option = RTSX_SG_VALID | SG_TRANS_DATA;
 			}
 
 			rtsx_add_sg_tbl(chip, (u32)addr, (u32)len, option);

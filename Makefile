@@ -36,11 +36,11 @@ $(TARGET_MODULE)-objs := rtsx.o rtsx_chip.o rtsx_transport.o rtsx_scsi.o rtsx_ca
 default:
 	sed "s/RTSX_MK_TIME/`date +%y.%m.%d.%H.%M`/" timestamp.in > timestamp.h
 	cp -f ./define.release ./define.h
-	make -C /lib/modules/$(KVERSION)/build/ SUBDIRS=$(PWD) modules
+	make -C /lib/modules/$(KVERSION)/build/ M=$(PWD) modules
 debug:
 	sed "s/RTSX_MK_TIME/`date +%y.%m.%d.%H.%M`/" timestamp.in > timestamp.h
 	cp -f ./define.debug ./define.h
-	make -C /lib/modules/$(KVERSION)/build/ SUBDIRS=$(PWD) modules
+	make -C /lib/modules/$(KVERSION)/build/ M=$(PWD) modules
 install:
 	cp $(TARGET_MODULE).ko /lib/modules/$(KVERSION)/kernel/drivers/scsi -f
 clean:

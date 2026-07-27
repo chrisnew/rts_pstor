@@ -327,8 +327,8 @@ struct sense_data_t {
 #define CHK_BIT(data, idx)	((data) & (1 << (idx)))
 
 #define SG_INT			0x04
-#define SG_END			0x02
-#define SG_VALID		0x01
+#define RTSX_SG_END		0x02
+#define RTSX_SG_VALID		0x01
 
 #define SG_NO_OP		0x00
 #define SG_TRANS_DATA		(0x02 << 4)

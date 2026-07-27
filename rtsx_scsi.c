@@ -2728,11 +2728,12 @@ int get_ms_information(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 	}
 	
 	if (dev_info_id == 0x15) {
-		buf_len = data_len = 0x3A;
+		data_len = 0x3A;
 	} else {
-		buf_len = data_len = 0x6A;
+		data_len = 0x6A;
 	}
-	
+	buf_len = data_len + 2;
+
 	buf = (u8 *)kmalloc(buf_len, GFP_KERNEL);
 	if (!buf) {
 		TRACE_RET(chip, TRANSPORT_ERROR);

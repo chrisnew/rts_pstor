@@ -138,44 +138,34 @@ static int slave_configure(struct scsi_device *sdev)
 #define SPRINTF(args...) \
 	do { if (pos < buffer+length) pos += sprintf(pos, ## args); } while (0)
 
-static int queuecommand_lck(struct scsi_cmnd *srb,
-			void (*done)(struct scsi_cmnd *))
+static int queuecommand_lck(struct scsi_cmnd *srb)
 {
 	struct rtsx_dev *dev = host_to_rtsx(srb->device->host);
 	struct rtsx_chip *chip = dev->chip;
 
-	
+
 	if (chip->srb != NULL) {
 		printk(KERN_ERR "Error in %s: chip->srb = %p\n",
 			__FUNCTION__, chip->srb);
 		return SCSI_MLQUEUE_HOST_BUSY;
 	}
 
-	
+
 	if (rtsx_chk_stat(chip, RTSX_STAT_DISCONNECT)) {
 		printk(KERN_INFO "Fail command during disconnect\n");
 		srb->result = DID_NO_CONNECT << 16;
-		done(srb);
+		scsi_done(srb);
 		return 0;
 	}
 
-	
-	srb->scsi_done = done;
+
 	chip->srb = srb;
 	up(&(dev->sema));
 
 	return 0;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 37)
-static int queuecommand(struct scsi_cmnd *srb,
-			void (*done)(struct scsi_cmnd *))
-{
-	return queuecommand_lck(srb, done);
-}
-#else
 static DEF_SCSI_QCMD(queuecommand)
-#endif
 
 /***********************************************************************
  * Error handling functions
@@ -266,13 +256,7 @@ struct scsi_host_template rtsx_host_template = {
 	
 	.max_sectors =                  240,
 
-	/* merge commands... this seems to help performance, but
-	 * periodically someone should test to see which setting is more
-	 * optimal.
-	 */
-	.use_clustering =		1,
 
-	
 	.emulated =			1,
 
 	
@@ -520,7 +504,7 @@ static int rtsx_control_thread(void * __dev)
 
 		
 		else if (chip->srb->result != DID_ABORT << 16) {
-			chip->srb->scsi_done(chip->srb);
+			scsi_done(chip->srb);
 		} else {
 SkipForAbort:
 			printk(KERN_ERR "scsi command aborted\n");
@@ -556,7 +540,7 @@ SkipForAbort:
 	 * This is important in preemption kernels, which transfer the flow
 	 * of execution immediately upon a complete().
 	 */
-	complete_and_exit(&threads_gone, 0);
+	kthread_complete_and_exit(&threads_gone, 0);
 }
 
 
@@ -602,7 +586,7 @@ static int rtsx_polling_thread(void * __dev)
 	}
 
 	scsi_host_put(host);
-	complete_and_exit(&threads_gone, 0);
+	kthread_complete_and_exit(&threads_gone, 0);
 }
 
 /*
@@ -733,7 +717,7 @@ static void quiesce_and_remove_host(struct rtsx_dev *dev)
 	if (chip->srb) {
 		chip->srb->result = DID_NO_CONNECT << 16;
 		scsi_lock(host);
-		chip->srb->scsi_done(dev->chip->srb);
+		scsi_done(dev->chip->srb);
 		chip->srb = NULL;
 		scsi_unlock(host);
 	}
@@ -777,7 +761,7 @@ static int rtsx_scan_thread(void * __dev)
 	}
 
 	scsi_host_put(rtsx_to_host(dev));
-	complete_and_exit(&threads_gone, 0);
+	kthread_complete_and_exit(&threads_gone, 0);
 }
 
 static void rtsx_init_options(struct rtsx_chip *chip)
@@ -934,7 +918,7 @@ static int rtsx_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
 
 	printk(KERN_INFO "Resource length: 0x%x\n", (unsigned int)pci_resource_len(pci,0));
 	dev->addr = pci_resource_start(pci, 0);
-	dev->remap_addr = ioremap_nocache(dev->addr, pci_resource_len(pci,0));
+	dev->remap_addr = ioremap(dev->addr, pci_resource_len(pci,0));
 	if (dev->remap_addr == NULL) {
 		printk(KERN_ERR "ioremap error\n");
 		err = -ENXIO;
